@@ -1,0 +1,5 @@
+# depslib dependency file v1.0
+1590153536 source:d:\desktop\project\scannerforc\scanner.c
+	<stdio.h>
+	<stdlib.h>
+
