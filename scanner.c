@@ -21,6 +21,8 @@ static const CHAR = 4;
 static const STRING = 5;
 
 int special_count[6] = {0, 0, 0, 0, 0, 0};
+bool single_comment = false;
+bool multiple_comment = false;
 
 void split(char *src,const char *separator,char **dest,int *num) {
     char *pNext;
@@ -71,7 +73,7 @@ bool check_is_OPER(char word[], int row_count) {
     return check;
 }
 
-bool check_is_SPEC(char word[]) {
+bool check_is_SPEC(char word[], int row_count) {
     bool check = false;
     int i;
     for(i = 0; i < 5; i++) {
@@ -81,7 +83,38 @@ bool check_is_SPEC(char word[]) {
         }
     }
 
+    if(strcmp(word, "{") == 0) {
+        special_count[CURLY_BRACKET]++;
+    } else if(strcmp(word, "}") == 0) {
+        if(special_count[CURLY_BRACKET] > 0)
+            special_count[CURLY_BRACKET]--;
+        else
+            printf("error at line %d, missing operator '{' ",row_count);
+    } else if(strcmp(word, "(") == 0) {
+        special_count[PARENTHESES]++;
+    } else if(strcmp(word, ")") == 0) {
+        if(special_count[PARENTHESES] > 0)
+            special_count[PARENTHESES]--;
+        else
+            printf("error at line %d, missing operator '(' ",row_count);
+    }
+
     return check;
+}
+
+bool check_is_COMMENT(char word[]) {
+    bool check = false;
+    if(strcmp(word, "//") == 0){
+        single_comment = true;
+        check = true;
+    } else if(strcmp(word, "/*") == 0) {
+        special_count[MULTIPLE_COMMENT]++;
+    } else if(strcmp(word, "*/") == 0) {
+        if(special_count[MULTIPLE_COMMENT] > 0)
+            special_count[MULTIPLE_COMMENT]--;
+        else
+            printf("error at line %d, missing operator '/*' ",row_count);
+    }
 }
 
 void scan_word(char word[], int row_count) {
@@ -89,20 +122,28 @@ void scan_word(char word[], int row_count) {
     bool print = false;
     char *type;
 
-    if(check_is_REWD(word)) {
-        type = "REWD";
-        print = true;
-    } else if(check_is_OPER(word, row_count)) {
-        type = "OPER";
-        print = true;
+    if(!single_comment) {
+        if(check_is_REWD(word)) {
+            type = "REWD";
+            print = true;
+        } else if(check_is_OPER(word, row_count)) {
+            type = "OPER";
+            print = true;
+        } else if(check_is_SPEC(word, row_count)){
+            type = "SPEC";
+            print = true;
+        } else if(check_is_COMMENT(word)) {
+
+        }
+
+
+    //    for(i=0;i< strlen(word);i++){
+    //        printf("%c\n",word[i]);
+    //    }
+
+        if(print && !multiple_comment) printf("%d   %s   %s",row_count,type,word);
     }
 
-
-//    for(i=0;i< strlen(word);i++){
-//        printf("%c\n",word[i]);
-//    }
-
-    if(print) printf("%d   %s   %s",row_count,type,word);
 }
 
 int main() {
