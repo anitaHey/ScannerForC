@@ -22,6 +22,7 @@ int special_count[4] = {0, 0, 0, 0};
 bool single_comment = false;
 bool multiple_comment[] = {false,false};
 bool is_string[] = {false,false};
+bool is_PREP = false;
 
 void split(char *src,const char *separator,char **dest,int *num) {
     char *pNext;
@@ -174,12 +175,46 @@ int check_is_STR(char word[], int row_count) {
     return check;
 }
 
+int check_is_INTE(char word[]) {
+    int i;
+    for(i = 0;i<strlen(word);i++){
+        if(!isdigit(word[i]))
+            return 0;
+    }
+
+    return 1;
+}
+
+
+int check_is_FLOAT(char word[]) {
+    if (word == NULL) {
+        return 0;
+    }
+    char *endptr;
+    if (word == endptr) {
+        return 0; // no conversion;
+    }
+    // Look at trailing text
+    while (isspace((unsigned char ) *endptr))
+        endptr++;
+
+    if(*endptr == '\0') return 1;
+    else return 0;
+}
+
+int check_is_PREP(char word[]){
+    if(strcmp(word[0], "#include") == 0){
+        is_PREP = true;
+        return 1;
+    }
+}
+
 void scan_word(char word[], int row_count) {
     int state;
     bool print = false;
     char *type;
 
-    if(!single_comment) {
+    if(!single_comment && !is_PREP) {
 
         if(is_string[0]) {
             check_is_STR(word, row_count);
@@ -198,7 +233,11 @@ void scan_word(char word[], int row_count) {
                 type = "CHAR";
             } else if(state = check_is_STR(word, row_count) != 0) {
                 type = "STR";
-            }
+            } else if(state = check_is_INTE(word) != 0) {
+                type = "INTE";
+            } else if(state = check_is_FLOAT(word) != 0) {
+                type = "FLOT";
+            } else if()
         }
 
 
