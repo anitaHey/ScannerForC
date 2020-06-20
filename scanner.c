@@ -33,6 +33,11 @@ bool is_PREP = false;
 int token_len = 0;
 int token_split[] = {0, 0};
 
+char *str_tem_arr[50];
+int str_tem_count = 0;
+
+char *ans_arr[5000];
+int ans_count = 0;
 
 void split(char *src,const char *separator,char **dest,int *num) {
     char *pNext;
@@ -75,7 +80,8 @@ int check_is_OPER(char word[], int row_count) {
         if(special_count[SQUARE_BRACKET] > 0) {
             special_count[SQUARE_BRACKET]--;
         } else {
-            printf("ERROR: At line %d, missing operator '[' \n",row_count);
+            ans_arr[ans_count] = (char*)malloc(1000 * sizeof(char));
+            sprintf(ans_arr[ans_count++], "ERROR: At line %d, missing operator '[' ",row_count);
             check = 2;
         }
     }
@@ -98,7 +104,8 @@ int check_is_SPEC(char word[], int row_count) {
         if(special_count[CURLY_BRACKET] > 0) {
             special_count[CURLY_BRACKET]--;
         } else {
-            printf("ERROR: At line %d, missing operator '{' \n",row_count);
+            ans_arr[ans_count] = (char*)malloc(1000 * sizeof(char));
+            sprintf(ans_arr[ans_count++], "ERROR: At line %d, missing operator '{' ",row_count);
             check = 2;
         }
     } else if(strcmp(word, "(") == 0) {
@@ -107,7 +114,8 @@ int check_is_SPEC(char word[], int row_count) {
         if(special_count[PARENTHESES] > 0)
             special_count[PARENTHESES]--;
         else {
-            printf("ERROR: At line %d, missing operator '(' \n",row_count);
+            ans_arr[ans_count] = (char*)malloc(1000 * sizeof(char));
+            sprintf(ans_arr[ans_count++], "ERROR: At line %d, missing operator '(' ",row_count);
             check = 2;
         }
     }
@@ -133,7 +141,8 @@ int check_is_COMMENT(char word[], int row_count, int number) {
                 special_count[MULTIPLE_COMMENT]--;
                 check_end[MULTIPLE] = true;
             } else {
-                printf("ERROR: At line %d, missing operator '/*' \n",row_count);
+                ans_arr[ans_count] = (char*)malloc(1000 * sizeof(char));
+                sprintf(ans_arr[ans_count++], "ERROR: At line %d, missing operator '/*' ",row_count);
             }
             check = 2;
         }
@@ -150,12 +159,14 @@ int check_is_CHAR(char word[], int row_count) {
                 check = true;
                 check = 1;
             } else {
-                printf("ERROR: At line %d, wrong char.\n",row_count);
+                ans_arr[ans_count] = (char*)malloc(1000 * sizeof(char));
+                sprintf(ans_arr[ans_count++], "ERROR: At line %d, wrong char.",row_count);
                 check = 2;
             }
         } else {
-            if(strlen(word) <3){
-                printf("ERROR: At line %d, missing operator ' .\n",row_count);
+            if(strlen(word) <3) {
+                ans_arr[ans_count] = (char*)malloc(1000 * sizeof(char));
+                sprintf(ans_arr[ans_count++], "ERROR: At line %d, missing operator ' .",row_count);
                 check = 2;
             }
         }
@@ -289,7 +300,14 @@ void scan_word(char word[], int row_count, int number) {
             token_split[1] = token_len;
 
             if(state == 1) {
-                printf("%d   %s   %s\n",row_count,type,current_word);
+                if(check_end[STRING]) {
+                    str_tem_arr[str_tem_count] = (char*)malloc(1000 * sizeof(char));
+                    sprintf(str_tem_arr[str_tem_count++], "%d   %s   %s",row_count, type, current_word);
+                } else {
+                    ans_arr[ans_count] = (char*)malloc(1000 * sizeof(char));
+                    sprintf(ans_arr[ans_count++], "%d   %s   %s",row_count,type,current_word);
+                }
+
             }
 
         } else {
@@ -314,7 +332,13 @@ int main() {
 
     fpr = fopen(file_name, "r");
 
+    if(fpr == NULL){
+        printf("Error : Cannot find file.");
+        return 0;
+    }
+
     while(!feof(fpr)) {
+        printf("%d\n",row_count);
         ++row_count;
 
         memset(read_word, 0, sizeof(read_word));
@@ -337,7 +361,8 @@ int main() {
                     strcat(tem_word, " ");
                 }
 
-                printf("%d   MC   %s\n",row_count, tem_word);
+                ans_arr[ans_count] = (char*)malloc(1000 * sizeof(char));
+                sprintf(ans_arr[ans_count++], "%d   MC   %s",row_count, tem_word);
                 start_arr[MULTIPLE] = -1;
                 check_end[MULTIPLE] = false;
             } else if(start_arr[STRING] != -1 && check_end[STRING]) {
@@ -370,9 +395,18 @@ int main() {
                     strcat(tem_word, " ");
                 }
 
-                printf("%d   STR   %s\n",row_count, tem_word);
+                ans_arr[ans_count] = (char*)malloc(1000 * sizeof(char));
+                sprintf(ans_arr[ans_count++], "%d   STR   %s",row_count, tem_word);
                 start_arr[STRING] = -1;
                 check_end[STRING] = false;
+
+                for(int a = 0; a<str_tem_count ; a++) {
+                    ans_arr[ans_count] = (char*)malloc(1000 * sizeof(char));
+                    sprintf(ans_arr[ans_count++], "%s",str_tem_arr[a]);
+                    str_tem_arr[a] = "";
+                }
+                str_tem_count = 0;
+
             }
         }
 
@@ -383,7 +417,8 @@ int main() {
                 strcat(tem_word, " ");
             }
 
-            printf("%d   SC   %s\n",row_count, tem_word);
+            ans_arr[ans_count] = (char*)malloc(1000 * sizeof(char));
+            sprintf(ans_arr[ans_count++], "%d   SC   %s",row_count, tem_word);
             start_arr[SINGLE] = -1;
         } else if(start_arr[MULTIPLE] != -1) {
             char tem_word[1000] = "";
@@ -391,11 +426,13 @@ int main() {
                 strcat(tem_word, split_word[j]);
                 strcat(tem_word, " ");
             }
-            printf("%d   MC   %s\n",row_count, tem_word);
+            ans_arr[ans_count] = (char*)malloc(1000 * sizeof(char));
+            sprintf(ans_arr[ans_count++], "%d   MC   %s",row_count, tem_word);
 
             start_arr[MULTIPLE] = 0;
         } else if(start_arr[STRING] != -1) {
-            printf("ERROR: At line %d, missing \" for the string .\n", row_count);
+            ans_arr[ans_count] = (char*)malloc(1000 * sizeof(char));
+            sprintf(ans_arr[ans_count++], "ERROR: At line %d, missing \" for the string .", row_count);
             start_arr[STRING] = -1;
         } else if(is_PREP) {
             char tem_word[1000] = "";
@@ -404,12 +441,29 @@ int main() {
                 strcat(tem_word, " ");
             }
 
-            printf("%d   PREP   %s\n",row_count, tem_word);
+            ans_arr[ans_count] = (char*)malloc(1000 * sizeof(char));
+            sprintf(ans_arr[ans_count++], "%d   PREP   %s",row_count, tem_word);
             is_PREP = false;
         }
     }
 
     fclose(fpr);
+
+    FILE *file_out = fopen( "output.txt","w+" );
+
+    if (file_out != NULL) {
+        for(int a = 0; a<ans_count; a++) {
+            char *pos;
+            if ((pos=strrchr(ans_arr[a], '\n')) != NULL)
+                *pos = '\0';
+
+            fputs(ans_arr[a], file_out);
+            fputc('\n', file_out);
+        }
+
+        fclose(file_out);
+    }
+
 
     return 0;
 }
